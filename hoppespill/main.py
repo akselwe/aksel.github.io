@@ -283,7 +283,7 @@ def updateHighscore():
             with open('highscore.txt', 'w') as file:
                 file.write(str(highscore))
 
-
+#skriv bedre
 def platformMaker():
     global platform, platform2
     if len(platformGroup) < MaxPlatforms:
