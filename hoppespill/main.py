@@ -1,36 +1,3 @@
-"""
-- enemyes, mask kollisjon (pixel-perfect metode fra pg.sprite)
-- highscore + highscoreline
-- start screen
-- pause screen
-
-"""
-
-'''
-
-VELKOMMEN TIL TOPLAYER HOPPESPILL.
-    
-DERE HAR 45 SEKUNDER PÅ Å FÅ HØYEST MULIG SCORE. JO HØYERE DU KOMMER, JO HØYERE SCORE. HØYEST SCORE VINNER!
-
-- Du kan, og bør, dobbelthoppe
-- Pass på å ikke falle av, da taper du. Pass også på de skumle fuglene som kommer etterhvert, de er livsfarlige og skumle- 
-
-
-Kontroller:
-
-Venstre spiller styrer med A, S og W.
-- A = gå høyre
-- S = gå venstre
-- W = hopp
-
-Høyre spiller styrer med piltaster.
-- høyrepil = gå høyre
-- venstrepil = gå venstre
-- opp pil = hopp
-
-'''
-
-
 import pygame, sys, time, random
 import pygame as pg
 from pygame.locals import *
