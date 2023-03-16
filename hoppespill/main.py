@@ -1,10 +1,35 @@
-
 """
-- start screen
 - enemyes, mask kollisjon (pixel-perfect metode fra pg.sprite)
-- highscore line
+- highscore + highscoreline
+- start screen
+- pause screen
 
 """
+
+'''
+
+VELKOMMEN TIL TOPLAYER HOPPESPILL.
+    
+DERE HAR 45 SEKUNDER PÅ Å FÅ HØYEST MULIG SCORE. JO HØYERE DU KOMMER, JO HØYERE SCORE. HØYEST SCORE VINNER!
+
+- Du kan, og bør, dobbelthoppe
+- Pass på å ikke falle av, da taper du. Pass også på de skumle fuglene som kommer etterhvert, de er livsfarlige og skumle- 
+
+
+Kontroller:
+
+Venstre spiller styrer med A, S og W.
+- A = gå høyre
+- S = gå venstre
+- W = hopp
+
+Høyre spiller styrer med piltaster.
+- høyrepil = gå høyre
+- venstrepil = gå venstre
+- opp pil = hopp
+
+'''
+
 
 import pygame, sys, time, random
 import pygame as pg
@@ -16,9 +41,14 @@ from settings import *
 
 pg.init()
 
+'''
 with open('highscore.txt', 'r') as file:
-    highscore = int(file.read())
-
+    highscore = 0
+    for line in file:
+        if len(line) > 0:
+            #highscore = int(file.read())
+            highscore = int(line)
+'''
 
 screen = pg.display.set_mode((0, 0), pg.FULLSCREEN)
 size = screen.get_size() #[x,y]
@@ -28,12 +58,9 @@ scrollLine = size[1]/2
 #backgroundImg
 backgroundImg = pg.image.load('bilder/sky1.png').convert_alpha()
 backgroundImg = pg.transform.scale(backgroundImg, size)
-#playerImg 
 player1Img = pg.image.load('bilder/jumpy3.png').convert_alpha()
 player2Img = pg.image.load('bilder/jumpy2.png').convert_alpha()
-#platformImg
 platformImg = pg.image.load('bilder/wood.png').convert_alpha()
-#bird spritesheet
 birdpics = pg.image.load('bilder/bird.png').convert_alpha()
 birdsheet = SpriteSheet(birdpics)
 
@@ -66,9 +93,6 @@ linje1 = Box(size[0]/2 - lineWidth/4, 0, lineWidth/2, 40, LIGHTBLUE)
 linje2 = Box(size[0]/2 - lineWidth/4, 110, lineWidth/2, size[1], LIGHTBLUE)
 
 
-
-
-
 class Player:
     def __init__(self, x, y, img):
         self.img = pg.transform.scale(img, (playerSize, playerSize * 1.3))
@@ -90,6 +114,7 @@ class Player:
     
     def draw(self):
         screen.blit(pygame.transform.flip(self.img, self.flip, False), (self.rect.x - 15, self.rect.y - 14))
+        #pg.draw.rect(screen, RED, self.rect, 2)
         
     def update(self):
         scroll = 0
@@ -117,8 +142,11 @@ class Player:
                         self.rect.y = platform.rect.y - self.rect.height
                         self.vy = 0
                         self.jumpcount = 0
-            
         
+        #mask - pixel perfect collision
+        self.mask = pg.mask.from_surface(self.img)
+ 
+ 
         return scroll
     
     
@@ -226,7 +254,7 @@ def checkWinner(leftScore, rightScore):
     elif rightScore > leftScore:
         winner = "RIGHT PLAYER WON"
     else:
-        winner = "No winner. DRAW"
+        winner = "NO WINNER. DRAW"
     return winner
 
 
@@ -256,24 +284,38 @@ def timer(sek, font, color, x, y):
     seconds = total_seconds % 60
     sekund = "{0:00}".format(seconds)
     draw_text(str(sekund), font, color, x, y)
+    
     return total_seconds
     
 
 def checkGameOver(player, enemygroup, score):
-    if pg.sprite.spritecollide(player, enemygroup, False) or player.rect.top >= size[1]:
+    
+    if player.rect.top >= size[1]:
         player.rect.top = size[1] + 400
         score = 0
         player.gameOver = True
+    
+    if pg.sprite.spritecollide(player, enemygroup, False):
+        if pg.sprite.spritecollide(player, enemygroup, False, pg.sprite.collide_mask):
+            player.rect.top = size[1] + 400
+            score = 0
+            player.gameOver = True
+            
     return score
+
 
 def background():
     screen.blit(backgroundImg, (0, 0))
     linje1.draw()
     linje2.draw()
-    
+
+
 def makeEnemy(group, score, xlim, ylim):
-    if len(group) <= 1 and score >= lvls[2]:
-        enemy = Enemy(xlim, ylim, random.choice([-300, -200, 100]), birdsheet, 2.5)
+    global maks 
+    if score >= lvls[3]:
+        maks = 2
+    if len(group) <= maks and score >= lvls[2]:
+        enemy = Enemy(xlim, ylim, random.choice([-400, -200, 0, 200]), birdsheet, 2.5)
         group.add(enemy)
 
 def updateHighscore():
@@ -283,7 +325,7 @@ def updateHighscore():
             with open('highscore.txt', 'w') as file:
                 file.write(str(highscore))
 
-#skriv bedre
+
 def platformMaker():
     global platform, platform2
     if len(platformGroup) < MaxPlatforms:
@@ -321,10 +363,12 @@ while running:
         background()
 
         #timer
-        sek = timer(45, font(80), BLUE, size[0]/2 - 35, 50)
+        sek = timer(10, font(80), BLUE, size[0]/2 - 35, 50)
         if sek <= 0:
             leftPlayer.gameOver = True
             rightPlayer.gameOver = True
+        
+        platformMaker()
         
         #lagre update som scroll for å ha variabelen til å sjekke scrolling på skjermen (player.update() returnerer scroll)
         leftScroll = leftPlayer.update()
@@ -332,8 +376,6 @@ while running:
         scrolls = [leftScroll, rightScroll]
         
         moveX()
-        
-        platformMaker()
         
         for i in range(2):
             players[i].draw()
@@ -345,8 +387,7 @@ while running:
             if scrolls[i] > 0:
                 scores[i] += int(scrolls[i]//10)
         
-        
-        
+
         drawScore(scores[0], 50)
         drawScore(scores[1], size[0] - 200)
         
@@ -354,10 +395,10 @@ while running:
         makeEnemy(enemyGroup2, scores[1], size[0]/2, size[0])
         enemyGroup.update(scrolls[0], 0, size[0]/2)
         enemyGroup2.update(scrolls[1], size[0]/2, size[0])
+       
         
         scores[0] = checkGameOver(leftPlayer, enemyGroup, scores[0])
         scores[1] = checkGameOver(rightPlayer, enemyGroup2, scores[1])
-        
         
 
         # Håndterer hendelser
@@ -374,24 +415,29 @@ while running:
                     leftPlayer.jump()
                     leftPlayer.jumpcount += 1
          
-         
-         
         
-        
-        
+        #highscoreline
         '''
         if scores[0] > scores[1]:
             s = scores[0]
         else:
             s = scores[1]
-        '''
-        #pg.draw.line(screen, WHITE, (0, scores[0] - highscore + scrollLine), (size[0], scores[0] - highscore + scrollLine), 3)
         
+        pg.draw.line(screen, WHITE, (0, s - highscore + scrollLine), (size[0], s - highscore + scrollLine), 3)
+        '''
+        '''
+        
+        for score in scores:
+            if score > highscore:
+                highscore = score
+        with open('highscore.txt', 'w') as file:
+            file.write(str(highscore))
+        '''    
         
         
     else:
         #sjekk vinner
-        winner = checkWinner(scores[0], scores[1]) 
+        winner = checkWinner(scores[0], scores[1])
         gameOverScreen()
 
         for event in pg.event.get():
@@ -400,6 +446,7 @@ while running:
                     running = False
                     pg.quit()
                     sys.exit()
+                    
 
     pg.display.flip()    
     
